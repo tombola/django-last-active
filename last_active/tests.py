@@ -1,13 +1,14 @@
 # Create your tests here.
 import datetime
 import time
+from unittest import mock
 
-import mock
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.test import TestCase
 from django.utils import timezone
+
 from last_active import middleware, settings
 from last_active.models import LastActive, clear_interval, user_seen
 
@@ -28,9 +29,9 @@ class TestLastActiveManager(TestCase):
         LastActive = mock.Mock(LastActive)
         get_or_create.return_value = (LastActive, True)
 
-        LastActive.objects.seen(user=user)
+        LastActive.objects.seen(request=request)
 
-        get_or_create.assert_called_with(
+        get_or_create.assert_called_with(GS
             user=user, module=settings.last_active_DEFAULT_MODULE, site=Site.objects.get_current()
         )
         self.assertFalse(LastActive.save.called)
@@ -41,7 +42,7 @@ class TestLastActiveManager(TestCase):
         site = Site(pk=2)
         get_or_create.return_value = (None, True)
 
-        LastActive.objects.seen(user=user, site=site, module="test")
+        LastActive.objects.seen(request=request, site=site, module="test")
 
         get_or_create.assert_called_with(user=user, module="test", site=site)
 
@@ -51,7 +52,7 @@ class TestLastActiveManager(TestCase):
         LastActive = mock.Mock(LastActive)
         get_or_create.return_value = (LastActive, True)
 
-        LastActive.objects.seen(user=user)
+        LastActive.objects.seen(request=request)
 
         get_or_create.assert_called_with(
             user=user, module=settings.last_active_DEFAULT_MODULE, site=Site.objects.get_current()
@@ -67,9 +68,10 @@ class TestLastActiveManager(TestCase):
         LastActive.last_active = old_time
         get_or_create.return_value = (LastActive, False)
 
-        ret = LastActive.objects.seen(user=user)
+        ret = LastActive.objects.seen(request=request)
 
         get_or_create.assert_called_with(
+            # TODO: This would fail for a wagtail Site
             user=user, module=settings.last_active_DEFAULT_MODULE, site=Site.objects.get_current()
         )
         self.assertTrue(LastActive.save.called)
@@ -84,9 +86,10 @@ class TestLastActiveManager(TestCase):
         LastActive.last_active = old_time
         get_or_create.return_value = (LastActive, False)
 
-        ret = LastActive.objects.seen(user=user, force=True)
+        ret = LastActive.objects.seen(request=request, force=True)
 
         get_or_create.assert_called_with(
+            # TODO: This would fail for a wagtail Site
             user=user, module=settings.last_active_DEFAULT_MODULE, site=Site.objects.get_current()
         )
         self.assertTrue(LastActive.save.called)
@@ -101,9 +104,10 @@ class TestLastActiveManager(TestCase):
         LastActive.last_active = old_time
         get_or_create.return_value = (LastActive, False)
 
-        ret = LastActive.objects.seen(user=user)
+        ret = LastActive.objects.seen(request=request)
 
         get_or_create.assert_called_with(
+            # TODO: This would fail for a wagtail Site
             user=user, module=settings.last_active_DEFAULT_MODULE, site=Site.objects.get_current()
         )
         self.assertFalse(LastActive.save.called)
@@ -130,6 +134,7 @@ class TestLastActiveManager(TestCase):
     @mock.patch("last_active.models.LastActive.objects.filter", autospec=True)
     def test_seen_site(self, filter):
         user = User(username="testuser")
+        # TODO: This would fail for a wagtail Site
         site = Site()
         LastActive.objects.when(user=user, site=site)
 
@@ -145,12 +150,14 @@ class TestUserSeen(TestCase):
         user = User(username="testuser", pk=999)
 
         user_seen(user)
+        # TODO: This would fail for a wagtail Site
         site = Site.objects.get_current()
         seen.assert_called_with(user, module=settings.last_active_DEFAULT_MODULE, site=site)
 
     @mock.patch("last_active.models.LastActive.objects.seen", autospec=True)
     def test_user_seen_no_default(self, seen):
         user = User(username="testuser", pk=1)
+        # TODO: This would fail for a wagtail Site
         site = Site(pk=2)
         user_seen(user, module="test", site=site)
         seen.assert_called_with(user, module="test", site=site)
@@ -172,6 +179,7 @@ class TestUserSeen(TestCase):
             time.time() - (2 * settings.last_active_INTERVAL),
         )
         user_seen(user, module=module)
+        # TODO: This would fail for a wagtail Site
         site = Site.objects.get_current()
         seen.assert_called_with(user, module=module, site=site)
 
@@ -180,6 +188,7 @@ class TestClearInterval(TestCase):
     @mock.patch("last_active.models.LastActive.objects.filter", autospec=True)
     @mock.patch("last_active.models.cache", autospec=True)
     def test_clear_interval(self, cache, filter):
+        # TODO: This would fail for a wagtail Site
         site = Site.objects.get_current()
         user = User(username="testuser", pk=1)
         ls1 = LastActive(user=user, module="mod1", site=site)
