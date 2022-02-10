@@ -2,9 +2,9 @@
 
 import django.db.models.deletion
 import django.utils.timezone
-from django.conf import settings
-# from last_active import settings
 from django.db import migrations, models
+
+from .. import settings
 
 
 class Migration(migrations.Migration):
@@ -22,14 +22,9 @@ class Migration(migrations.Migration):
             fields=[
                 (
                     "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
+                    models.BigAutoField(primary_key=True, serialize=False),
                 ),
-                ("module", models.CharField(default="default", max_length=20)),
+                ("module", models.CharField(default=settings.LAST_SEEN_DEFAULT_MODULE, max_length=20)),
                 (
                     "last_active",
                     models.DateTimeField(default=django.utils.timezone.now),
